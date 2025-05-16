@@ -1,4 +1,4 @@
-# prompt_response_eyetrackpy
+# etrackpy_new
 
 A Python library that utilizes and extends the data processor models from the [eyetrackpy](https://github.com/angelalopezcardona/eyetrackpy) library by Angela Lopez Cardona. This library applies these models to analyze eye-tracking data in Visual Question Answering (VQA) experiments, specifically for processing both prompts and responses.
 
