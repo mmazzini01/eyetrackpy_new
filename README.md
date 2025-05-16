@@ -21,7 +21,7 @@ pip install git+https://github.com/mmazzini01/prompt_response_eyetrackpy.git
 
 Here's a basic example of how to use the  in example\data_processor directory after installing:
 
-```python
+```bash
 python main_prompt_response.py
 ```
 
