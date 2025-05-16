@@ -60,6 +60,6 @@ setup(
     # },
     # other metadata like author, description, license, etc.
     author="Angela Lopez and Matteo Mazzini",
-    description="A Python package for eye tracking analysis that extend eyetrackpy library also to prompt-response data.",
+    description="A Python package for eye tracking analysis that extend eyetrackpy data_processor functionality library also to prompt-response data.",
 )
 

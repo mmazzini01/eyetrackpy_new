@@ -1,11 +1,11 @@
 # prompt_response_eyetrackpy
 
-A Python library that extends the [eyetrackpy](https://github.com/angelalopezcardona/eyetrackpy) library by Angela Lopez Cardona. This library provides additional functionality for assigning fixations to words and generating plots for prompt-response Visual Question Answering (VQA) experiments.
+A Python library that utilizes and extends the data processor models from the [eyetrackpy](https://github.com/angelalopezcardona/eyetrackpy) library by Angela Lopez Cardona. This library applies these models to analyze eye-tracking data in Visual Question Answering (VQA) experiments, specifically for processing both prompts and responses.
 
 ## Features
 
-- Extends eyetrackpy functionality to prompts
-- Assigns fixations to words in prompts and responses
+- Uses eyetrackpy's data processor models for fixation analysis
+- Processes fixations for both prompts and responses
 - Generates visualization plots for prompt-response patterns
 - Compatible with existing eyetrackpy workflows
 
@@ -19,10 +19,10 @@ pip install git+https://github.com/mmazzini01/prompt_response_eyetrackpy.git
 
 ## Usage
 
-Here's a basic example of how to use the library:
+Here's a basic example of how to use the  in example\data_processor directory after installing:
 
 ```python
-python examples\data_processor\main_prompt_response.py
+python main_prompt_response.py
 
 ## Acknowledgments
 
