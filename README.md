@@ -14,7 +14,7 @@ A Python library that utilizes and extends the data processor models from the [e
 You can install the library directly from GitHub using pip:
 
 ```bash
-pip install git+https://github.com/mmazzini01/prompt_response_eyetrackpy.git
+pip install git+https://github.com/mmazzini01/eyetrackpy_new.git
 ```
 
 ## Usage
