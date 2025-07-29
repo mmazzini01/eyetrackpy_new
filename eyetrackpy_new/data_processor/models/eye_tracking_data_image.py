@@ -1552,6 +1552,7 @@ class EyeTrackingDataImage(EyeTrackingData):
 
     def _asign_fixations_words_trial_1(self, words_fix_trial, fixations_trial):
         # asign a line to each word
+        #TODO: to be updated computing fiprop and go pas time here
         words_fix_trial = copy.deepcopy(words_fix_trial)
         fixations_trial = copy.deepcopy(fixations_trial)
         words_fix_trial = self._search_lines_trial(words_fix_trial)
