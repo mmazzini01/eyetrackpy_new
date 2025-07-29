@@ -1160,6 +1160,11 @@ class EyeTrackingDataImage(EyeTrackingData):
         fix_duration = round(words_fix_trial["fix_duration"].sum() / number_words, 4)
         fix_number = round(words_fix_trial["fix_number"].sum() / number_words, 4)
         pupil = round(words_fix_trial["pupil"].mean(), 4)
+        if "go_past_time" in words_fix_trial.columns:
+            go_past_time = round(words_fix_trial["go_past_time"].mean(), 4)
+        else:
+             go_past_time = 0
+
         return {
             "number_words_mean": number_words,
             "first_fix_duration_mean": first_fix_duration,
@@ -1167,6 +1172,7 @@ class EyeTrackingDataImage(EyeTrackingData):
             "fix_number_mean": fix_number,
             "pupil_mean": pupil,
             "fixations_regressions_mean": fixations_regressions,
+            "go_past_time_mean": go_past_time,
         }
 
     def _asign_fixations_words_trial(self, words_fix_trial, fixations_trial):
@@ -1549,6 +1555,65 @@ class EyeTrackingDataImage(EyeTrackingData):
                 info["mean_distance_nr"] = round(fixations_trial["distance"].mean(), 2)
 
             return fixations_trial, words_fix_trial, total_distance, info
+        
+    def compute_go_past_time_per_word(self, fixations_trial: pd.DataFrame, debug=False):
+        """
+        Compute go-past time for each word in a trial
+        Returns: dict {word_number: go_past_time}
+        """
+        go_past_times = {}
+        if "word_number" not in fixations_trial.columns:
+            if debug:
+                print("[DEBUG] 'word_number' column not found in fixations.")
+            return go_past_times
+        
+        fixations_sorted = fixations_trial.sort_index()
+
+        word_numbers = fixations_sorted["word_number"].dropna().unique()
+        
+        if debug:
+            print(f"[DEBUG] Starting go-past computation for {len(word_numbers)} words...")
+
+        for wnum in word_numbers:
+            try:
+                wnum = int(wnum)
+                go_past_time = 0
+                entered = False
+                if debug:
+                    print(f"\n[DEBUG] → Word #{wnum}")
+
+                for i, row in fixations_sorted.iterrows():
+                    row_wnum = row.get("word_number")
+                    if pd.isna(row_wnum):
+                        continue
+                    row_wnum = int(row_wnum)
+
+                    if row_wnum == wnum:
+                        if not entered and debug:
+                            print(f"  [ENTER] Fixation ID {row['ID']} enters word {wnum}")
+                        entered = True
+                        go_past_time += row["duration"]
+                        if debug:
+                            print(f"   +{row['duration']}ms (on word {wnum})")
+                    elif entered and row_wnum > wnum:
+                        if debug:
+                            print(f"  [EXIT] Fixation ID {row['ID']} on word {row_wnum} → stop")
+                        break
+                    elif entered:
+                        go_past_time += row["duration"]
+                        if debug:
+                            print(f"   +{row['duration']}ms (regression or same)")
+
+                go_past_times[wnum] = round(go_past_time, 2)
+
+                if debug:
+                    print(f"  [TOTAL] go-past time for word {wnum}: {go_past_times[wnum]} ms")
+            except Exception as e:
+                print(f"[ERROR] Computing go-past for word {wnum}: {e}")
+                continue
+
+        return go_past_times
+
 
     def _asign_fixations_words_trial_1(self, words_fix_trial, fixations_trial):
         # asign a line to each word
@@ -1559,6 +1624,9 @@ class EyeTrackingDataImage(EyeTrackingData):
         words_fix_trial, fixations_trial, total_distance = (
             self._asign_fixations_words_trial(words_fix_trial, fixations_trial)
         )
+        # compute go past time per word
+        go_past_times = self.compute_go_past_time_per_word(fixations_trial, debug=True)
+        words_fix_trial["go_past_time"] = words_fix_trial["number"].map(go_past_times)
         return words_fix_trial, fixations_trial, total_distance
 
     def compute_closets_word_row(self, words_fix_trial, fixation_row, word_line_prev, fixation_x_prev):
