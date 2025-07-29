@@ -969,7 +969,7 @@ class EyeTrackingDataImage(EyeTrackingData):
         """
         Save coordinates of words of trial in csv file"""
         # create_csv with words_fix_trial
-        features.to_csv(self.folder_name + "/general_features" + ".csv", sep=";")
+        features.to_csv(self.folder_name + "/general_features" + ".csv", sep=";",index=False)
         return True
 
     def euclidean_distance(self, row, x=0, y=0):
@@ -1625,7 +1625,7 @@ class EyeTrackingDataImage(EyeTrackingData):
             self._asign_fixations_words_trial(words_fix_trial, fixations_trial)
         )
         # compute go past time per word
-        go_past_times = self.compute_go_past_time_per_word(fixations_trial, debug=True)
+        go_past_times = self.compute_go_past_time_per_word(fixations_trial, debug=False)
         words_fix_trial["go_past_time"] = words_fix_trial["number"].map(go_past_times)
         return words_fix_trial, fixations_trial, total_distance
 
