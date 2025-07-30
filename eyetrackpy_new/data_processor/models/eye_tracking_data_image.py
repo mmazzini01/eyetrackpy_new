@@ -36,6 +36,7 @@ import numpy as np
 import pandas as pd
 import re
 import traceback
+from collections import defaultdict
 
 
 class EyeTrackingDataImage(EyeTrackingData):
@@ -1164,6 +1165,7 @@ class EyeTrackingDataImage(EyeTrackingData):
             go_past_time = round(words_fix_trial["go_past_time"].mean(), 4)
         else:
              go_past_time = 0
+        total_reading_time = round(fixations_trial.iloc[1:]["duration"].sum(), 4)# first fixation never assigned to any word
 
         return {
             "number_words_mean": number_words,
@@ -1173,6 +1175,7 @@ class EyeTrackingDataImage(EyeTrackingData):
             "pupil_mean": pupil,
             "fixations_regressions_mean": fixations_regressions,
             "go_past_time_mean": go_past_time,
+            "trt_trial": total_reading_time,
         }
 
     def _asign_fixations_words_trial(self, words_fix_trial, fixations_trial):
@@ -1666,3 +1669,80 @@ class EyeTrackingDataImage(EyeTrackingData):
                 distance = words_fix_trial["distance"].loc[idx]
         
         return closest_word_row, distance
+    
+    def aggregate_word_fixprop_across_users(self, users_list, sessions_list):
+        """
+        Calculates the proportion of users who fixated on each word for each trial,
+        including words that were never fixated (fixprop = 0.0).
+        Saves the result in words_fixprop.csv inside self.path.
+        """
+
+        word_user_map = defaultdict(set)  # (trial, word_number, text) → set(usernames)
+        all_words = set()  # all words (including those never fixated)
+
+        for user in users_list:
+            for session in sessions_list:
+                try:
+                    etdi = EyeTrackingDataImage(
+                        user=user,
+                        session=session,
+                        user_set=0,
+                        x_screen=self.x_screen,
+                        y_screen=self.y_screen,
+                        path=self.path
+                    )
+
+                    for trial in etdi.trials:
+                        df = etdi.load_words_fixations_trial(trial)
+                        if df is None or df.empty:
+                            continue
+
+                        for _, row in df.iterrows():
+                            try:
+                                key = (trial, int(row["number"]), row["text"])
+                                all_words.add(key)
+
+                                fix_ids_raw = row["fixations"]
+
+                                fix_ids = []
+                                if isinstance(fix_ids_raw, str):
+                                    # Extract floats even from strings like '[np.float64(1234.0)]'
+                                    matches = re.findall(r"[-+]?\d*\.\d+|\d+", fix_ids_raw)
+                                    fix_ids = [float(m) for m in matches]
+                                else:
+                                    fix_ids = fix_ids_raw
+
+                                if isinstance(fix_ids, list) and len(fix_ids) > 0:
+                                    word_user_map[key].add(user)
+
+                            except Exception as row_error:
+                                print(f"[ROW ERROR] Trial {trial}, user {user}: {row_error}")
+                                continue
+
+                except Exception as e:
+                    print(f"[WARN] Skipping user {user}, session {session}: {e}")
+                    traceback.print_exc()
+                    continue
+
+        # Build the final DataFrame
+        total_users = len(users_list)
+        fixprop_data = []
+
+        for key in sorted(all_words):
+            trial, word_number, text = key
+            users = word_user_map.get(key, set())
+            fixprop_data.append({
+                "trial": trial,
+                "word_number": word_number,
+                "text": text,
+                "fixprop": round(len(users) / total_users, 4)
+            })
+
+        fixprop_df = pd.DataFrame(fixprop_data)
+        fixprop_df.sort_values(by=["trial", "word_number"], inplace=True)
+
+        output_path = self.path + "/words_fixprop.csv"
+        fixprop_df.to_csv(output_path, index=False)
+
+        print(f"[OK] File saved: {output_path}")
+        return fixprop_df
